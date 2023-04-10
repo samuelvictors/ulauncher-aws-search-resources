@@ -1,0 +1,33 @@
+{
+  "required_api_version": "^2.0.0",
+  "name": "AWS Resource Search",
+  "description": "ULauncher extension to search AWS Resources.",
+  "developer_name": "Samuel Victor",
+  "icon": "images/aws.png",
+  "options": {
+    "query_debounce": 0.5
+  },
+  "preferences": [
+    {
+      "id": "bucket",
+      "type": "keyword",
+      "name": "S3 Bucket",
+      "description": "Search AWS S3 Buckets.",
+      "default_value": "bucket"
+    },
+    {
+      "id": "function",
+      "type": "keyword",
+      "name": "Lambda Function",
+      "description": "Search AWS Lambda Functions.",
+      "default_value": "lambda"
+    },
+    {
+      "id": "table",
+      "type": "keyword",
+      "name": "DynamoDB Table",
+      "description": "Search AWS DynamoDB Tables.",
+      "default_value": "table"
+    }
+  ]
+}
