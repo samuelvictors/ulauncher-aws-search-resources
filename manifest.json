@@ -28,6 +28,13 @@
       "name": "DynamoDB Table",
       "description": "Search AWS DynamoDB Tables.",
       "default_value": "table"
+    },
+    {
+      "id": "update",
+      "type": "keyword",
+      "name": "Update AWS Resources",
+      "description": "Update AWS Resources.",
+      "default_value": "update"
     }
   ]
 }
