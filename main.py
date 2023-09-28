@@ -89,7 +89,7 @@ class KeywordQueryEventListener(EventListener):
                         urllib.parse.quote(aws_resource_name))
                     items.append(ExtensionResultItem(icon=RESOURCE_ICON[keyword_id],
                                                      name=aws_resource_name,
-                                                     description="Press <enter> to open in browser",
+                                                     description=f"Press <enter> to open in {browser}",
                                                      on_enter=RunScriptAction(f"{browser} '{url}'")))
                 if (len(items) >= MAX_ITEMS_IN_LIST):
                     return RenderResultListAction(items)
