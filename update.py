@@ -3,6 +3,7 @@
 import re
 import gi
 import json
+import sys
 import subprocess
 import threading
 
@@ -24,6 +25,7 @@ resourceList = [
         "command": "aws dynamodb list-tables --query 'TableNames[]'"
     },
 ]
+profile = sys.argv[1]
 
 
 def process_resource(resource_item, resources_label):
@@ -46,6 +48,7 @@ def process_resource(resource_item, resources_label):
 
 
 def update_resources(resources_label, window):
+    change_aws_credentials()
     for resource_item in resourceList:
         process_resource(resource_item, resources_label)
     window.destroy()
@@ -92,5 +95,9 @@ def create_window():
     window.show_all()
     Gtk.main()
 
+
+def change_aws_credentials():
+    if len(sys.argv) > 2:
+        subprocess.check_output(f"export AWS_PROFILE={profile}", shell=True)
 
 create_window()

@@ -44,14 +44,18 @@ class KeywordQueryEventListener(EventListener):
         items = []
         query = event.get_argument() or ""
         keyword = event.get_keyword()
-        browser = extension.preferences['browser'] 
+        browser = extension.preferences['browser']
+        profile = extension.preferences['aws_profile']
 
         for kwId, kw in extension.preferences.items():
             if kw == keyword:
                 keyword_id = kwId
 
         if (keyword_id == 'update'):
-            script_path = os.path.join(os.path.dirname(__file__), "update.py")
+            if profile == 'Default':
+                script_path = os.path.join(os.path.dirname(__file__), "update.py")
+            else:
+                script_path = os.path.join(os.path.dirname(__file__), f"update.py {profile}")
             return RenderResultListAction([ExtensionResultItem(icon=UPDATE_ICON,
                                                                name="Update AWS Resources",
                                                                description="Example: 'beta'",

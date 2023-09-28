@@ -15,3 +15,7 @@ Change the Browser field in the preferences to the selected browser.
 - chromium - Chromium
 - opera - Opera
 - msedge - Microsoft Edge
+
+### Change AWS profile
+This profile will be used to update AWS account resources. 
+To avoid changing the default profile, leave the field as ***default***.
