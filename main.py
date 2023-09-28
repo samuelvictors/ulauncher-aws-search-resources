@@ -56,7 +56,7 @@ class KeywordQueryEventListener(EventListener):
             return RenderResultListAction([ExtensionResultItem(icon=UPDATE_ICON,
                                                                name="Update AWS Resources",
                                                                description="Example: 'beta'",
-                                                               on_enter=subprocess.run(["python3", script_path, profile]))])
+                                                               on_enter=subprocess.run(["python3", script_path, profile], shell=True))])
         
         search_terms = query.lower().strip().split(" ")
         target_environment = search_terms[0]

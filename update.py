@@ -101,4 +101,5 @@ def change_aws_credentials():
     if profile != "default":
         subprocess.check_output(f"export AWS_PROFILE={profile}", shell=True)
 
+
 create_window()
