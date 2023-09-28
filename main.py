@@ -44,6 +44,7 @@ class KeywordQueryEventListener(EventListener):
         items = []
         query = event.get_argument() or ""
         keyword = event.get_keyword()
+        browser = extension.preferences['browser'] 
 
         for kwId, kw in extension.preferences.items():
             if kw == keyword:
@@ -89,7 +90,7 @@ class KeywordQueryEventListener(EventListener):
                     items.append(ExtensionResultItem(icon=RESOURCE_ICON[keyword_id],
                                                      name=aws_resource_name,
                                                      description="Press <enter> to open in browser",
-                                                     on_enter=RunScriptAction("xdg-open '%s'" % url)))
+                                                     on_enter=RunScriptAction(f"{browser} '{url}'")))
                 if (len(items) >= MAX_ITEMS_IN_LIST):
                     return RenderResultListAction(items)
 
