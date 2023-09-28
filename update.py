@@ -25,7 +25,7 @@ resourceList = [
         "command": "aws dynamodb list-tables --query 'TableNames[]'"
     },
 ]
-profile = sys.argv[1]
+
 
 
 def process_resource(resource_item, resources_label):
@@ -97,7 +97,8 @@ def create_window():
 
 
 def change_aws_credentials():
-    if len(sys.argv) > 2:
+    profile = sys.argv[1]
+    if profile != "default":
         subprocess.check_output(f"export AWS_PROFILE={profile}", shell=True)
 
 create_window()

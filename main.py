@@ -52,14 +52,11 @@ class KeywordQueryEventListener(EventListener):
                 keyword_id = kwId
 
         if (keyword_id == 'update'):
-            if profile == 'Default':
-                script_path = os.path.join(os.path.dirname(__file__), "update.py")
-            else:
-                script_path = os.path.join(os.path.dirname(__file__), f"update.py {profile}")
+            script_path = os.path.join(os.path.dirname(__file__), "update.py")
             return RenderResultListAction([ExtensionResultItem(icon=UPDATE_ICON,
                                                                name="Update AWS Resources",
                                                                description="Example: 'beta'",
-                                                               on_enter=subprocess.run(["python3", script_path]))])
+                                                               on_enter=subprocess.run(["python3", script_path, profile]))])
         
         search_terms = query.lower().strip().split(" ")
         target_environment = search_terms[0]
