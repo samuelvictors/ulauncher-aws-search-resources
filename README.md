@@ -29,4 +29,13 @@ To check the available profiles look in the Chrome folder.
 
 ### Change the AWS profile:
 
-To use the default profile, leave it ***default***
+To use the default profile, leave it `default`.
+
+If the command update on ulauncher bar dont work, run the script on terminal.
+
+```BASH
+cd ~/.local/share/ulauncher/extensions/com.github.samuelvictors.ulauncher-aws-search-resources
+
+python3 update.py PROFILE```
+
+
