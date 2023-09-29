@@ -42,6 +42,13 @@
       "name": "Browser",
       "description": "More info on readme",
       "default_value": "xdg-open"
+    },
+    {
+      "id": "aws_profile",
+      "type": "input",
+      "name": "AWS Profile",
+      "description": "More info on readme",
+      "default_value": "default"
     }
   ]
 }

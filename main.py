@@ -46,6 +46,7 @@ class KeywordQueryEventListener(EventListener):
         query = event.get_argument() or ""
         keyword = event.get_keyword()
         browser = extension.preferences['browser']
+        profile = extension.preferences['aws_profile']
 
         for kwId, kw in extension.preferences.items():
             if kw == keyword:
@@ -56,7 +57,7 @@ class KeywordQueryEventListener(EventListener):
             return RenderResultListAction([ExtensionResultItem(icon=UPDATE_ICON,
                                                                name="Update AWS Resources",
                                                                description="Example: 'beta'",
-                                                               on_enter=subprocess.run(["python", script_path]))])
+                                                               on_enter=subprocess.run(["python", script_path, profile]))])
         
         search_terms = query.lower().strip().split(" ")
         target_environment = search_terms[0]
