@@ -25,7 +25,10 @@ resourceList = [
         "command": "aws dynamodb list-tables --query 'TableNames[]'"
     },
 ]
-profile = sys.argv[1]
+if len(sys.argv) > 1:
+    profile = sys.argv[1]
+else:
+    profile = "default"
 
 
 def process_resource(resource_item, resources_label):
