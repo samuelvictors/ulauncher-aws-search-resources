@@ -3,6 +3,7 @@
 import re
 import gi
 import json
+import sys
 import subprocess
 import threading
 
@@ -24,6 +25,7 @@ resourceList = [
         "command": "aws dynamodb list-tables --query 'TableNames[]'"
     },
 ]
+profile = sys.argv[1]
 
 
 def process_resource(resource_item, resources_label):
@@ -53,7 +55,7 @@ def update_resources(resources_label, window):
 
 
 def get_aws_resource(command):
-    return json.loads(subprocess.check_output(command, shell=True))
+    return json.loads(subprocess.check_output(f"{command} --profile {profile} < /dev/null", shell=True))
 
 
 def update_progress(progress_bar):
