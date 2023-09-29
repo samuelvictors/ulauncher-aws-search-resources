@@ -35,6 +35,13 @@
       "name": "Update AWS Resources",
       "description": "Update AWS Resources.",
       "default_value": "update"
+    },
+    {
+      "id": "browser",
+      "type": "input",
+      "name": "Browser",
+      "description": "More info on readme",
+      "default_value": "xdg-open"
     }
   ]
 }
