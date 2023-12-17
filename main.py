@@ -11,7 +11,6 @@ from ulauncher.api.shared.action.DoNothingAction import DoNothingAction
 from ulauncher.api.shared.action.ExtensionCustomAction import \
     ExtensionCustomAction
 from ulauncher.api.shared.action.HideWindowAction import HideWindowAction
-from ulauncher.api.shared.action.LaunchAppAction import LaunchAppAction
 from ulauncher.api.shared.action.RenderResultListAction import \
     RenderResultListAction
 from ulauncher.api.shared.action.RunScriptAction import RunScriptAction
@@ -56,8 +55,8 @@ class KeywordQueryEventListener(EventListener):
                 keyword_id = kwId
 
         if (keyword_id == 'update'):
-            profile_preference = extension.preferences['profile'] if 'profile' in extension.preferences else None
-            update_description = f"Press enter to update resources with {profile_preference if profile_preference else 'default'} profile"
+            profile_preference = extension.preferences.get('profile', None)
+            update_description = f"Press enter to update resources with {profile_preference or 'default'} profile"
             update_data = {'profile': profile_preference} if profile_preference else {}
             return RenderResultListAction([ExtensionResultItem(icon=UPDATE_ICON,
                                                                name="Update AWS Resources",

@@ -33,11 +33,11 @@ def process_resource(resource_item, resources_label, profile):
         label_text = f"Updating {resource_item['name']}..."
         GLib.idle_add(resources_label.set_text, label_text)
         resources = json.load(open("resources.json"))
-        search_command = resource_item["command"] if profile == None else resource_item["command"] + f" --profile={profile}"
+        search_command = f'{resource_item["command"]}{f" --profile={profile}" if profile else ""}'        
         resource_name_list = get_aws_resource(search_command)
         resources[resource_item["name"]] = {}
         for resource_name in resource_name_list:
-            match = re.search(r"-(beta|sdbx|prod|dvdv\w+)", resource_name)
+            match = re.search(r"-(beta|prod)", resource_name)
             if match:
                 env = match.group(1)
                 if env not in resources[resource_item["name"]]:
@@ -82,8 +82,8 @@ def create_window():
     resource_label = Gtk.Label(label="Updating AWS resources...")
     vbox.pack_start(resource_label, True, True, 2)
 
-    profile = sys.argv[1] if len(sys.argv) > 1 else None
-    profile_label = Gtk.Label(label=f"({profile if profile != None else 'default'} profile)")
+    profile = next(iter(sys.argv[1:]), None)    
+    profile_label = Gtk.Label(label=f"({profile or 'default'} profile)")
     vbox.pack_start(profile_label, True, True, 0)
 
     progress_bar = Gtk.ProgressBar()
