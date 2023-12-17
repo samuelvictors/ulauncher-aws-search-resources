@@ -1,20 +1,23 @@
 import json
-import urllib.parse
-from pathlib import Path
 import os
 import subprocess
+import sys
+import urllib.parse
+from pathlib import Path
 
-
-from ulauncher.api.shared.action.LaunchAppAction import LaunchAppAction
 from ulauncher.api.client.EventListener import EventListener
 from ulauncher.api.client.Extension import Extension
-from ulauncher.api.shared.action.HideWindowAction import HideWindowAction
 from ulauncher.api.shared.action.DoNothingAction import DoNothingAction
-from ulauncher.api.shared.action.RenderResultListAction import RenderResultListAction
+from ulauncher.api.shared.action.ExtensionCustomAction import \
+    ExtensionCustomAction
+from ulauncher.api.shared.action.HideWindowAction import HideWindowAction
+from ulauncher.api.shared.action.LaunchAppAction import LaunchAppAction
+from ulauncher.api.shared.action.RenderResultListAction import \
+    RenderResultListAction
 from ulauncher.api.shared.action.RunScriptAction import RunScriptAction
-from ulauncher.api.shared.event import KeywordQueryEvent
-from ulauncher.api.shared.item.ExtensionResultItem import ExtensionResultItem
 from ulauncher.api.shared.action.SetUserQueryAction import SetUserQueryAction
+from ulauncher.api.shared.event import ItemEnterEvent, KeywordQueryEvent
+from ulauncher.api.shared.item.ExtensionResultItem import ExtensionResultItem
 
 UPDATE_ICON = "images/update.png"
 ENVIRONMENT_ICON = "images/environment.png"
@@ -35,6 +38,7 @@ class AWSResourceSearch(Extension):
     def __init__(self):
         super(AWSResourceSearch, self).__init__()
         self.subscribe(KeywordQueryEvent, KeywordQueryEventListener())
+        self.subscribe(ItemEnterEvent, ItemEnterEventListener()) 
 
 
 class KeywordQueryEventListener(EventListener):
@@ -52,11 +56,13 @@ class KeywordQueryEventListener(EventListener):
                 keyword_id = kwId
 
         if (keyword_id == 'update'):
-            script_path = os.path.join(os.path.dirname(__file__), "update.py")
+            profile_preference = extension.preferences['profile'] if 'profile' in extension.preferences else None
+            update_description = f"Press enter to update resources with {profile_preference if profile_preference else 'default'} profile"
+            update_data = {'profile': profile_preference} if profile_preference else {}
             return RenderResultListAction([ExtensionResultItem(icon=UPDATE_ICON,
                                                                name="Update AWS Resources",
-                                                               description="Example: 'beta'",
-                                                               on_enter=subprocess.run(["python", script_path]))])
+                                                               description=update_description,
+                                                               on_enter=ExtensionCustomAction(data=update_data, keep_app_open=True))])
         
         search_terms = query.lower().strip().split(" ")
         target_environment = search_terms[0]
@@ -103,6 +109,20 @@ class KeywordQueryEventListener(EventListener):
                                                                on_enter=HideWindowAction())])
 
         return RenderResultListAction(items)
+
+class ItemEnterEventListener(EventListener):
+
+    def on_event(self, event, extension):
+        data = event.get_data()
+        script_path = os.path.join(os.path.dirname(__file__), "update.py")
+        python_executable = sys.executable
+        update_command_args = [python_executable, script_path]
+        if ('profile' in data):
+            update_command_args.append(data['profile'])
+        subprocess.run(update_command_args)
+        return RenderResultListAction([ExtensionResultItem(icon=UPDATE_ICON,
+                                                        name="Update done",
+                                                        on_enter=HideWindowAction())])
 
 
 if __name__ == '__main__':
