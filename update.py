@@ -1,13 +1,14 @@
 #!/usr/bin/python
 
-import re
-import gi
 import json
+import re
 import subprocess
 import threading
 
+import gi
+
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, GLib
+from gi.repository import GLib, Gtk
 
 # AWS resources to update
 resourceList = [
