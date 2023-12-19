@@ -1,13 +1,15 @@
 #!/usr/bin/python
 
-import re
-import gi
 import json
+import re
 import subprocess
+import sys
 import threading
 
+import gi
+
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, GLib
+from gi.repository import GLib, Gtk
 
 # AWS resources to update
 resourceList = [
@@ -26,14 +28,16 @@ resourceList = [
 ]
 
 
-def process_resource(resource_item, resources_label):
+def process_resource(resource_item, resources_label, profile):
     try:
-        resources_label.set_text(f"Updating {resource_item['name']}...")
+        label_text = f"Updating {resource_item['name']}..."
+        GLib.idle_add(resources_label.set_text, label_text)
         resources = json.load(open("resources.json"))
-        resource_name_list = get_aws_resource(resource_item["command"])
+        search_command = f'{resource_item["command"]}{f" --profile={profile}" if profile else ""}'        
+        resource_name_list = get_aws_resource(search_command)
         resources[resource_item["name"]] = {}
         for resource_name in resource_name_list:
-            match = re.search(r"-(beta|sdbx|prod|dvdv\w+)", resource_name)
+            match = re.search(r"-(beta|prod)", resource_name)
             if match:
                 env = match.group(1)
                 if env not in resources[resource_item["name"]]:
@@ -41,14 +45,13 @@ def process_resource(resource_item, resources_label):
                 resources[resource_item["name"]][env].append(resource_name)
         json.dump(resources, open("resources.json", "w"), indent=2)
     except Exception:
-        resources_label.set_markup(
-            f"<span color='red'>Error: An error occurred while updating {resource_item['name']}.</span>")
+        error_text = f"<span color='red'>Error: An error occurred while updating {resource_item['name']}.</span>"
+        GLib.idle_add(resources_label.set_markup, error_text)
 
 
-def update_resources(resources_label, window):
+def update_resources(resources_label, window, profile):
     for resource_item in resourceList:
-        process_resource(resource_item, resources_label)
-    window.destroy()
+        process_resource(resource_item, resources_label, profile)
     Gtk.main_quit()
 
 
@@ -69,13 +72,19 @@ def create_window():
     window.set_title("AWS Resources Update")
     window.set_position(Gtk.WindowPosition.CENTER)
     window.connect("destroy", Gtk.main_quit)
-    window.set_border_width(10)
+    window.set_default_size(300, 150)
 
-    vbox = Gtk.VBox(spacing=10)
+    vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+    vbox.set_margin_start(10)
+    vbox.set_margin_end(10)
     window.add(vbox)
 
     resource_label = Gtk.Label(label="Updating AWS resources...")
-    vbox.pack_start(resource_label, True, True, 8)
+    vbox.pack_start(resource_label, True, True, 2)
+
+    profile = next(iter(sys.argv[1:]), None)    
+    profile_label = Gtk.Label(label=f"({profile or 'default'} profile)")
+    vbox.pack_start(profile_label, True, True, 0)
 
     progress_bar = Gtk.ProgressBar()
     vbox.pack_start(progress_bar, True, True, 8)
@@ -84,13 +93,13 @@ def create_window():
         label="This update may take several minutes. Please be patient.")
     vbox.pack_start(info_label, True, True, 8)
 
-    GLib.timeout_add(100, update_progress, progress_bar)
+    GLib.timeout_add_seconds(1, update_progress, progress_bar)
 
-    thread = threading.Thread(target=update_resources, args=(resource_label, window))
+    process_args = [resource_label, window, profile]
+    thread = threading.Thread(target=update_resources, args=process_args)
     thread.start()
 
     window.show_all()
     Gtk.main()
-
 
 create_window()
