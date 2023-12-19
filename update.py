@@ -1,10 +1,12 @@
 #!/usr/bin/python
 
 import json
+import os
 import re
 import subprocess
 import sys
 import threading
+import traceback
 
 import gi
 
@@ -32,7 +34,8 @@ def process_resource(resource_item, resources_label, profile):
     try:
         label_text = f"Updating {resource_item['name']}..."
         GLib.idle_add(resources_label.set_text, label_text)
-        resources = json.load(open("resources.json"))
+        resources_file_path = os.path.join(os.path.dirname(__file__), "resources.json")
+        resources = json.load(open(resources_file_path))
         search_command = f'{resource_item["command"]}{f" --profile={profile}" if profile else ""}'        
         resource_name_list = get_aws_resource(search_command)
         resources[resource_item["name"]] = {}
@@ -43,7 +46,7 @@ def process_resource(resource_item, resources_label, profile):
                 if env not in resources[resource_item["name"]]:
                     resources[resource_item["name"]][env] = []
                 resources[resource_item["name"]][env].append(resource_name)
-        json.dump(resources, open("resources.json", "w"), indent=2)
+        json.dump(resources, open(resources_file_path, "w"), indent=2)
     except Exception:
         error_text = f"<span color='red'>Error: An error occurred while updating {resource_item['name']}.</span>"
         GLib.idle_add(resources_label.set_markup, error_text)
