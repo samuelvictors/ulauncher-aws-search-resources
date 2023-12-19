@@ -6,7 +6,6 @@ import re
 import subprocess
 import sys
 import threading
-import traceback
 
 import gi
 
