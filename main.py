@@ -23,12 +23,14 @@ ENVIRONMENT_ICON = "images/environment.png"
 RESOURCE_ICON = {
     'bucket': "images/bucket.png",
     'function': "images/lambda.png",
-    'table': "images/dynamo.png"
+    'table': "images/dynamo.png",
+    'log': "images/cloudwatch.png"
 }
 RESOURCE_URL = {
     'bucket': "https://s3.console.aws.amazon.com/s3/buckets/{}?region=sa-east-1&tab=objects",
     'function': "https://sa-east-1.console.aws.amazon.com/lambda/home?region=sa-east-1#/functions/{}?tab=code",
-    'table': "https://sa-east-1.console.aws.amazon.com/dynamodbv2/home?region=sa-east-1#item-explorer?initialTagKey=&maximize=true&table={}"
+    'table': "https://sa-east-1.console.aws.amazon.com/dynamodbv2/home?region=sa-east-1#item-explorer?initialTagKey=&maximize=true&table={}",
+    'log': "https://sa-east-1.console.aws.amazon.com/cloudwatch/home?region=sa-east-1#logsV2:log-groups/log-group/{}"
 }
 MAX_ITEMS_IN_LIST = 8
 
@@ -92,7 +94,7 @@ class KeywordQueryEventListener(EventListener):
             for aws_resource_name in aws_resources[keyword_id][target_environment]:
                 if all(term.lower() in aws_resource_name.lower() for term in search_terms):
                     url = RESOURCE_URL[keyword_id].format(
-                        urllib.parse.quote(aws_resource_name))
+                        urllib.parse.quote(aws_resource_name, safe=""))
                     items.append(ExtensionResultItem(icon=RESOURCE_ICON[keyword_id],
                                                      name=aws_resource_name,
                                                      description=f"Press <enter> to open in {browser}",

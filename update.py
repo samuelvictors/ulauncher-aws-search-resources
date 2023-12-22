@@ -26,6 +26,10 @@ resourceList = [
         "name": "table",
         "command": "aws dynamodb list-tables --query 'TableNames[]'"
     },
+    {
+        "name": "log",
+        "command": "aws logs describe-log-groups --query 'logGroups[*].logGroupName'"
+    }
 ]
 
 
