@@ -18,7 +18,7 @@ from ulauncher.api.shared.action.SetUserQueryAction import SetUserQueryAction
 from ulauncher.api.shared.event import ItemEnterEvent, KeywordQueryEvent
 from ulauncher.api.shared.item.ExtensionResultItem import ExtensionResultItem
 
-from aws_resource_type import resource_types
+from aws_resource import aws_resource_types
 
 UPDATE_ICON = "images/update.png"
 ENVIRONMENT_ICON = "images/environment.png"
@@ -55,7 +55,7 @@ class KeywordQueryEventListener(EventListener):
                                                                description=update_description,
                                                                on_enter=ExtensionCustomAction(data=update_data, keep_app_open=True))])
         
-        resource_type = resource_types[keyword_id]
+        resource_type = aws_resource_types[keyword_id]
         search_terms = query.lower().strip().split(" ")
         target_environment = search_terms[0]
         environments = [*aws_resources_file[resource_type.name].keys()]
