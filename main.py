@@ -18,20 +18,10 @@ from ulauncher.api.shared.action.SetUserQueryAction import SetUserQueryAction
 from ulauncher.api.shared.event import ItemEnterEvent, KeywordQueryEvent
 from ulauncher.api.shared.item.ExtensionResultItem import ExtensionResultItem
 
+from aws_resource_type import resource_types
+
 UPDATE_ICON = "images/update.png"
 ENVIRONMENT_ICON = "images/environment.png"
-RESOURCE_ICON = {
-    'bucket': "images/bucket.png",
-    'function': "images/lambda.png",
-    'table': "images/dynamo.png",
-    'log': "images/cloudwatch.png"
-}
-RESOURCE_URL = {
-    'bucket': "https://s3.console.aws.amazon.com/s3/buckets/{}?region=sa-east-1&tab=objects",
-    'function': "https://sa-east-1.console.aws.amazon.com/lambda/home?region=sa-east-1#/functions/{}?tab=code",
-    'table': "https://sa-east-1.console.aws.amazon.com/dynamodbv2/home?region=sa-east-1#item-explorer?initialTagKey=&maximize=true&table={}",
-    'log': "https://sa-east-1.console.aws.amazon.com/cloudwatch/home?region=sa-east-1#logsV2:log-groups/log-group/{}"
-}
 MAX_ITEMS_IN_LIST = 8
 
 
@@ -45,7 +35,7 @@ class AWSResourceSearch(Extension):
 class KeywordQueryEventListener(EventListener):
     def on_event(self, event, extension):
         with open(Path(__file__).with_name('resources.json'), "r") as f:
-            aws_resources = json.load(f)
+            aws_resources_file = json.load(f)
 
         items = []
         query = event.get_argument() or ""
@@ -65,9 +55,10 @@ class KeywordQueryEventListener(EventListener):
                                                                description=update_description,
                                                                on_enter=ExtensionCustomAction(data=update_data, keep_app_open=True))])
         
+        resource_type = resource_types[keyword_id]
         search_terms = query.lower().strip().split(" ")
         target_environment = search_terms[0]
-        environments = [*aws_resources[keyword_id].keys()]
+        environments = [*aws_resources_file[resource_type.name].keys()]
 
         if not query.strip():
             return RenderResultListAction([ExtensionResultItem(icon=ENVIRONMENT_ICON,
@@ -77,8 +68,8 @@ class KeywordQueryEventListener(EventListener):
 
         if (len(search_terms) == 1):
             if (target_environment in environments):
-                return RenderResultListAction([ExtensionResultItem(icon=RESOURCE_ICON[keyword_id],
-                                                                   name=f"Type a {keyword_id}",
+                return RenderResultListAction([ExtensionResultItem(icon=resource_type.icon,
+                                                                   name=f"Type a {resource_type.name}",
                                                                    description="Example: 'marketplace",
                                                                    on_enter=DoNothingAction())])
             for environment in environments:
@@ -91,11 +82,11 @@ class KeywordQueryEventListener(EventListener):
                     return RenderResultListAction(items)
 
         elif (len(search_terms) > 1):
-            for aws_resource_name in aws_resources[keyword_id][target_environment]:
+            for aws_resource_name in aws_resources_file[resource_type.name][target_environment]:
                 if all(term.lower() in aws_resource_name.lower() for term in search_terms):
-                    url = RESOURCE_URL[keyword_id].format(
+                    url = resource_type.url.format(
                         urllib.parse.quote(aws_resource_name, safe=""))
-                    items.append(ExtensionResultItem(icon=RESOURCE_ICON[keyword_id],
+                    items.append(ExtensionResultItem(icon=resource_type.icon,
                                                      name=aws_resource_name,
                                                      description=f"Press <enter> to open in {browser}",
                                                      on_enter=RunScriptAction(f"{browser} '{url}'")))
@@ -103,7 +94,7 @@ class KeywordQueryEventListener(EventListener):
                     return RenderResultListAction(items)
 
         if not items:
-            return RenderResultListAction([ExtensionResultItem(icon=RESOURCE_ICON[keyword_id] if len(search_terms) > 1 else ENVIRONMENT_ICON,
+            return RenderResultListAction([ExtensionResultItem(icon=resource_type.icon if len(search_terms) > 1 else ENVIRONMENT_ICON,
                                                                name="{} not found".format("Resource" if len(
                                                                    search_terms) > 1 else "Environment"),
                                                                description="Try a different query",
