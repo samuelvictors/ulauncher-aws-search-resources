@@ -7,6 +7,13 @@ class AwsResourceName(Enum):
   BUCKET = "bucket"
   LOG = "log"
 
+  @classmethod
+  def from_value(cls, value):
+    for resource_name in cls:
+      if resource_name.value == value:
+        return resource_name
+    return None
+
 class AwsResourceType:
   _URLS = {
     AwsResourceName.FUNCTION: "https://sa-east-1.console.aws.amazon.com/lambda/home?region=sa-east-1#/functions/{}?tab=code",
@@ -46,4 +53,4 @@ class AwsResourceType:
 
 aws_resource_types = {}
 for resource_name in AwsResourceName:
-  aws_resource_types[resource_name.value] = AwsResourceType.from_resource_name(resource_name)
+  aws_resource_types[resource_name] = AwsResourceType.from_resource_name(resource_name)
