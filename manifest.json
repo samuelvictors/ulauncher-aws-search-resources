@@ -30,6 +30,13 @@
       "default_value": "table"
     },
     {
+      "id": "log",
+      "type": "keyword",
+      "name": "CloudWatch Log Group",
+      "description": "Search AWS CloudWatch Log Groups.",
+      "default_value": "log"
+    },
+    {
       "id": "update",
       "type": "keyword",
       "name": "Update AWS Resources",

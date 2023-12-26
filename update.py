@@ -9,57 +9,41 @@ import threading
 
 import gi
 
+from aws_resource import aws_resource_types
+
 gi.require_version("Gtk", "3.0")
 from gi.repository import GLib, Gtk
-
-# AWS resources to update
-resourceList = [
-    {
-        "name": "bucket",
-        "command": "aws s3api list-buckets --query 'Buckets[*].Name'"
-    },
-    {
-        "name": "function",
-        "command": "aws lambda list-functions --query 'Functions[*].FunctionName'",
-    },
-    {
-        "name": "table",
-        "command": "aws dynamodb list-tables --query 'TableNames[]'"
-    },
-]
-
-
-def process_resource(resource_item, resources_label, profile):
-    try:
-        label_text = f"Updating {resource_item['name']}..."
-        GLib.idle_add(resources_label.set_text, label_text)
-        resources_file_path = os.path.join(os.path.dirname(__file__), "resources.json")
-        resources = json.load(open(resources_file_path))
-        search_command = f'{resource_item["command"]}{f" --profile={profile}" if profile else ""}'        
-        resource_name_list = get_aws_resource(search_command)
-        resources[resource_item["name"]] = {}
-        for resource_name in resource_name_list:
-            match = re.search(r"-(beta|prod)", resource_name)
-            if match:
-                env = match.group(1)
-                if env not in resources[resource_item["name"]]:
-                    resources[resource_item["name"]][env] = []
-                resources[resource_item["name"]][env].append(resource_name)
-        json.dump(resources, open(resources_file_path, "w"), indent=2)
-    except Exception:
-        error_text = f"<span color='red'>Error: An error occurred while updating {resource_item['name']}.</span>"
-        GLib.idle_add(resources_label.set_markup, error_text)
-
-
-def update_resources(resources_label, window, profile):
-    for resource_item in resourceList:
-        process_resource(resource_item, resources_label, profile)
-    Gtk.main_quit()
 
 
 def get_aws_resource(command):
     return json.loads(subprocess.check_output(command, shell=True))
 
+def process_resource(resource_type, resources_label, profile):
+    try:
+        label_text = f"Updating {resource_type.name}..."
+        GLib.idle_add(resources_label.set_text, label_text)
+        resources_file_path = os.path.join(os.path.dirname(__file__), "resources.json")
+        resources = json.load(open(resources_file_path))
+        search_command = f'{resource_type.search_command}{f" --profile={profile}" if profile else ""}'        
+        resource_name_list = get_aws_resource(search_command)
+        resources[resource_type.name] = {}
+        for resource_name in resource_name_list:
+            match = re.search(r"-(beta|prod)", resource_name)
+            if match:
+                env = match.group(1)
+                if env not in resources[resource_type.name]:
+                    resources[resource_type.name][env] = []
+                resources[resource_type.name][env].append(resource_name)
+        json.dump(resources, open(resources_file_path, "w"), indent=2)
+    except Exception:
+        error_text = f"<span color='red'>Error: An error occurred while updating {resource_type.name}</span>"
+        GLib.idle_add(resources_label.set_markup, error_text)
+
+
+def update_resources(resources_label, profile):
+    for resource_type in aws_resource_types.values():
+        process_resource(resource_type, resources_label, profile)
+    Gtk.main_quit()
 
 def update_progress(progress_bar):
     if progress_bar.get_fraction() < 1:
@@ -97,7 +81,7 @@ def create_window():
 
     GLib.timeout_add_seconds(1, update_progress, progress_bar)
 
-    process_args = [resource_label, window, profile]
+    process_args = [resource_label, profile]
     thread = threading.Thread(target=update_resources, args=process_args)
     thread.start()
 
