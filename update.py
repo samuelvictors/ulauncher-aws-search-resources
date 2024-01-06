@@ -18,7 +18,7 @@ from gi.repository import GLib, Gtk
 def get_aws_resource(command):
     return json.loads(subprocess.check_output(command, shell=True))
 
-def process_resource(resource_type, resources_label, profile):
+def process_resource(resource_type, resources_label, profile, stages_regex):
     try:
         label_text = f"Updating {resource_type.name}..."
         GLib.idle_add(resources_label.set_text, label_text)
@@ -28,7 +28,7 @@ def process_resource(resource_type, resources_label, profile):
         resource_name_list = get_aws_resource(search_command)
         resources[resource_type.name] = {}
         for resource_name in resource_name_list:
-            match = re.search(r"-(beta|prod)", resource_name)
+            match = re.search(stages_regex, resource_name)
             if match:
                 env = match.group(1)
                 if env not in resources[resource_type.name]:
@@ -40,9 +40,9 @@ def process_resource(resource_type, resources_label, profile):
         GLib.idle_add(resources_label.set_markup, error_text)
 
 
-def update_resources(resources_label, profile):
+def update_resources(resources_label, profile, stages_regex):
     for resource_type in aws_resource_types.values():
-        process_resource(resource_type, resources_label, profile)
+        process_resource(resource_type, resources_label, profile, stages_regex)
     Gtk.main_quit()
 
 def update_progress(progress_bar):
@@ -52,6 +52,18 @@ def update_progress(progress_bar):
     else:
         return False
 
+def remove_hover_effect(widget):
+    style_context = widget.get_style_context()
+    style_context.add_class("nohover")
+
+    css_provider = Gtk.CssProvider()
+    css_properties = """
+    .nohover:hover {
+        background-color: initial;
+    }
+    """
+    css_provider.load_from_data(css_properties.encode())
+    style_context.add_provider(css_provider, Gtk.STYLE_PROVIDER_PRIORITY_USER)
 
 def create_window():
     window = Gtk.Window()
@@ -68,9 +80,29 @@ def create_window():
     resource_label = Gtk.Label(label="Updating AWS resources...")
     vbox.pack_start(resource_label, True, True, 2)
 
+    listbox = Gtk.ListBox()
+    listbox.set_selection_mode(Gtk.SelectionMode.NONE)
+    vbox.pack_start(listbox, True, True, 2)
+
     profile = next(iter(sys.argv[1:]), None)    
-    profile_label = Gtk.Label(label=f"({profile or 'default'} profile)")
-    vbox.pack_start(profile_label, True, True, 0)
+    profile = profile if (profile is not None and profile != '') else None
+    profile_row = Gtk.ListBoxRow()
+    remove_hover_effect(profile_row)
+    profile_label = Gtk.Label(label=f"profile: {profile or 'default'}")
+    profile_label.set_halign(Gtk.Align.START)
+    profile_row.add(profile_label)
+    listbox.add(profile_row)
+
+    stages = next(iter(sys.argv[2:]), "dev,beta,prod")
+    stages_regex = re.compile(f"-({stages.replace(',', '|')})")
+    stages_row = Gtk.ListBoxRow()
+    remove_hover_effect(stages_row)
+    stages_label = Gtk.Label(label=f"stages: {stages}")
+    stages_label.set_halign(Gtk.Align.START)
+    stages_row.add(stages_label)
+    listbox.add(stages_row)
+
+    print(f'Update process args: profile={profile} / stages={stages}')
 
     progress_bar = Gtk.ProgressBar()
     vbox.pack_start(progress_bar, True, True, 8)
@@ -81,7 +113,7 @@ def create_window():
 
     GLib.timeout_add_seconds(1, update_progress, progress_bar)
 
-    process_args = [resource_label, profile]
+    process_args = [resource_label, profile, stages_regex]
     thread = threading.Thread(target=update_resources, args=process_args)
     thread.start()
 

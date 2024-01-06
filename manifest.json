@@ -55,6 +55,13 @@
       "type": "input",
       "name": "AWS Profile",
       "description": "AWS Profile to use"
+    },
+    {
+      "id": "stages",
+      "type": "input",
+      "name": "Stages",
+      "description": "Which stages to search for. E.g. dev,beta,prod",
+      "default_value": "dev,beta,prod"
     }
   ]
 }

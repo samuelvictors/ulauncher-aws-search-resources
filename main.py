@@ -48,8 +48,11 @@ class KeywordQueryEventListener(EventListener):
 
         if (keyword_id == 'update'):
             profile_preference = extension.preferences.get('profile', None)
+            stage_preference = extension.preferences.get('stages', None)
             update_description = f"Press enter to update resources with {profile_preference or 'default'} profile"
             update_data = {'profile': profile_preference} if profile_preference else {}
+            if stage_preference:
+                update_data['stages'] = stage_preference
             return RenderResultListAction([ExtensionResultItem(icon=UPDATE_ICON,
                                                                name="Update AWS Resources",
                                                                description=update_description,
@@ -108,9 +111,7 @@ class ItemEnterEventListener(EventListener):
         data = event.get_data()
         script_path = os.path.join(os.path.dirname(__file__), "update.py")
         python_executable = sys.executable
-        update_command_args = [python_executable, script_path]
-        if ('profile' in data):
-            update_command_args.append(data['profile'])
+        update_command_args = [python_executable, script_path, data.get('profile', ''), data.get('stages', 'dev,beta,prod')]
         subprocess.run(update_command_args)
         return RenderResultListAction([ExtensionResultItem(icon=UPDATE_ICON,
                                                         name="Update done",
