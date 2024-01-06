@@ -1,0 +1,1 @@
+ulauncher --no-extensions --dev -v
