@@ -10,35 +10,50 @@ import time
 
 import gi
 
+from aws_profile import AwsProfileInfo
 from aws_resource import aws_resource_types
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import GLib, Gtk
 
 
-def get_aws_resource(command):
-    return json.loads(subprocess.check_output(command, shell=True))
+def command_runner(additional_args):
+    def run_command(command, output_format="json"):
+        result = subprocess.check_output(f"{command} {additional_args or ''}", shell=True)
+        return json.loads(result) if output_format == "json" else result.decode()
+    return run_command
 
 def print_aws_resource_fetch_error(resource_type, error_type, error_value, error_traceback):
     print(f"Error during fetch aws resource {resource_type.name}: {error_type}, {error_value}")
     print(error_traceback)
 
-def process_resource(resource_type, resources_label, profile, stages_regex):
+def build_profile_args(profile_name):
+    return f"--profile={profile_name}" if profile_name else None
+
+def is_match_result(stages_regex):
+    def run_match(search_result):
+        match = re.search(stages_regex, search_result)
+        return match is not None
+    return run_match
+
+def process_resource_search(resource_type, resources_label, profile_info, stages):
+    print(f"Starting {resource_type.name} update at {time.strftime('%H:%M:%S')}")
     try:
-        label_text = f"Updating {resource_type.name}..."
+        label_text = f"Updating {resource_type.name}"
         GLib.idle_add(resources_label.set_text, label_text)
         resources_file_path = os.path.join(os.path.dirname(__file__), "resources.json")
         resources = json.load(open(resources_file_path))
-        search_command = f'{resource_type.search_command}{f" --profile={profile}" if profile else ""}'        
-        resource_name_list = get_aws_resource(search_command)
+        runner = command_runner(build_profile_args(profile_info.profile_name))
         resources[resource_type.name] = {}
-        for resource_name in resource_name_list:
-            match = re.search(stages_regex, resource_name)
+        stages_regex = re.compile(f"-({stages.replace(',', '|')})")
+        search_results = resource_type.search_resources(runner, profile_info)
+        for result_item in search_results:
+            match = re.search(stages_regex, result_item)
             if match:
                 env = match.group(1)
                 if env not in resources[resource_type.name]:
                     resources[resource_type.name][env] = []
-                resources[resource_type.name][env].append(resource_name)
+                resources[resource_type.name][env].append(result_item)
         json.dump(resources, open(resources_file_path, "w"), indent=2)
     except:
         error_type, error_value, error_traceback = sys.exc_info()
@@ -47,10 +62,9 @@ def process_resource(resource_type, resources_label, profile, stages_regex):
         GLib.idle_add(resources_label.set_markup, error_text)
         time.sleep(10)
 
-
-def update_resources(resources_label, profile, stages_regex):
+def update_resources(resources_label, profile_info, stages):
     for resource_type in aws_resource_types.values():
-        process_resource(resource_type, resources_label, profile, stages_regex)
+        process_resource_search(resource_type, resources_label, profile_info, stages)
     Gtk.main_quit()
 
 def update_progress(progress_bar):
@@ -75,6 +89,7 @@ def remove_hover_effect(widget):
 
 def add_parameter_label(listbox_container, label_text):
     label_row = Gtk.ListBoxRow()
+    label_row.set_selectable(False)
     remove_hover_effect(label_row)
     label = Gtk.Label(label=label_text)
     label.set_halign(Gtk.Align.START)
@@ -94,21 +109,20 @@ def create_window():
     window.add(vbox)
 
     resource_label = Gtk.Label(label="Updating AWS resources...")
-    vbox.pack_start(resource_label, True, True, 2)
+    vbox.pack_start(resource_label, True, True, 5)
 
     listbox = Gtk.ListBox()
     listbox.set_selection_mode(Gtk.SelectionMode.NONE)
     vbox.pack_start(listbox, True, True, 2)
 
-    profile = next(iter(sys.argv[1:]), None)    
-    profile = profile if (profile is not None and profile != '') else None
-    add_parameter_label(listbox, f"profile: {profile or 'default'}")
+    profile_name = next(iter(sys.argv[1:]), None)    
+    profile_name = profile_name if (profile_name is not None and profile_name != '') else None
+    add_parameter_label(listbox, f"profile: {profile_name or 'default'}")
 
     stages = next(iter(sys.argv[2:]), "dev,beta,prod")
-    stages_regex = re.compile(f"-({stages.replace(',', '|')})")
     add_parameter_label(listbox, f"stages: {stages}")
 
-    print(f'Update process args: profile={profile} / stages={stages}')
+    print(f'Update process args: profile={profile_name} / stages={stages}')
 
     progress_bar = Gtk.ProgressBar()
     vbox.pack_start(progress_bar, True, True, 8)
@@ -119,7 +133,9 @@ def create_window():
 
     GLib.timeout_add_seconds(1, update_progress, progress_bar)
 
-    process_args = [resource_label, profile, stages_regex]
+    profile_info = AwsProfileInfo(profile_name, command_runner(build_profile_args(profile_name)))
+
+    process_args = [resource_label, profile_info, stages]
     thread = threading.Thread(target=update_resources, args=process_args)
     thread.start()
 
