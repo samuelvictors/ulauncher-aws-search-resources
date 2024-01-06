@@ -6,6 +6,7 @@ import re
 import subprocess
 import sys
 import threading
+import time
 
 import gi
 
@@ -17,6 +18,10 @@ from gi.repository import GLib, Gtk
 
 def get_aws_resource(command):
     return json.loads(subprocess.check_output(command, shell=True))
+
+def print_aws_resource_fetch_error(resource_type, error_type, error_value, error_traceback):
+    print(f"Error during fetch aws resource {resource_type.name}: {error_type}, {error_value}")
+    print(error_traceback)
 
 def process_resource(resource_type, resources_label, profile, stages_regex):
     try:
@@ -35,9 +40,12 @@ def process_resource(resource_type, resources_label, profile, stages_regex):
                     resources[resource_type.name][env] = []
                 resources[resource_type.name][env].append(resource_name)
         json.dump(resources, open(resources_file_path, "w"), indent=2)
-    except Exception:
+    except:
+        error_type, error_value, error_traceback = sys.exc_info()
+        print_aws_resource_fetch_error(resource_type, error_type, error_value, error_traceback)
         error_text = f"<span color='red'>Error: An error occurred while updating {resource_type.name}</span>"
         GLib.idle_add(resources_label.set_markup, error_text)
+        time.sleep(10)
 
 
 def update_resources(resources_label, profile, stages_regex):
