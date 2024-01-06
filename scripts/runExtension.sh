@@ -1,1 +1,0 @@
-VERBOSE=1 ULAUNCHER_WS_API=ws://127.0.0.1:5054/com.github.rsilvr.ulauncher-aws-search-resources PYTHONPATH=/usr/lib/python3/dist-packages /usr/bin/python3 ~/.local/share/ulauncher/extensions/com.github.rsilvr.ulauncher-aws-search-resources/main.py
