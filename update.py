@@ -65,6 +65,14 @@ def remove_hover_effect(widget):
     css_provider.load_from_data(css_properties.encode())
     style_context.add_provider(css_provider, Gtk.STYLE_PROVIDER_PRIORITY_USER)
 
+def add_parameter_label(listbox_container, label_text):
+    label_row = Gtk.ListBoxRow()
+    remove_hover_effect(label_row)
+    label = Gtk.Label(label=label_text)
+    label.set_halign(Gtk.Align.START)
+    label_row.add(label)
+    listbox_container.add(label_row)
+
 def create_window():
     window = Gtk.Window()
     window.set_title("AWS Resources Update")
@@ -86,21 +94,11 @@ def create_window():
 
     profile = next(iter(sys.argv[1:]), None)    
     profile = profile if (profile is not None and profile != '') else None
-    profile_row = Gtk.ListBoxRow()
-    remove_hover_effect(profile_row)
-    profile_label = Gtk.Label(label=f"profile: {profile or 'default'}")
-    profile_label.set_halign(Gtk.Align.START)
-    profile_row.add(profile_label)
-    listbox.add(profile_row)
+    add_parameter_label(listbox, f"profile: {profile or 'default'}")
 
     stages = next(iter(sys.argv[2:]), "dev,beta,prod")
     stages_regex = re.compile(f"-({stages.replace(',', '|')})")
-    stages_row = Gtk.ListBoxRow()
-    remove_hover_effect(stages_row)
-    stages_label = Gtk.Label(label=f"stages: {stages}")
-    stages_label.set_halign(Gtk.Align.START)
-    stages_row.add(stages_label)
-    listbox.add(stages_row)
+    add_parameter_label(listbox, f"stages: {stages}")
 
     print(f'Update process args: profile={profile} / stages={stages}')
 
