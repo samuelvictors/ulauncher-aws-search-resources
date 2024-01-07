@@ -31,6 +31,10 @@ class AwsResourceType(ABC):
   def get_url(self, resource_identification):
     pass
 
+  @abstractmethod
+  def get_resource_name(self, resource_identification):
+    pass
+
   @classmethod
   def encode_name(cls, resource_name):
     return urllib.parse.quote(resource_name, safe="")
@@ -48,6 +52,11 @@ class LambdaFunction(AwsResourceType):
     region = resource_arn.split(":")[3] if not is_resource_name else self.DEFAULT_REGION
     function_name = resource_arn.split(":")[6] if not is_resource_name else resource_arn
     return "https://{}.console.aws.amazon.com/lambda/home#/functions/{}?tab=code".format(region, AwsResourceType.encode_name(function_name))
+  
+  def get_resource_name(self, resource_arn):
+    arn_elements = resource_arn.split(":")
+    is_resource_name = len(arn_elements) == 1
+    return resource_arn.split(":")[6] if not is_resource_name else resource_arn
 
 class DynamoTable(AwsResourceType):
   def __init__(self):
@@ -65,6 +74,11 @@ class DynamoTable(AwsResourceType):
     table_name_section = resource_arn.split(":")[5] if not is_resource_name else None
     table_name = table_name_section.split("/")[1] if table_name_section else resource_arn
     return "https://{}.console.aws.amazon.com/dynamodbv2/home#item-explorer?maximize=true&table={}".format(region, AwsResourceType.encode_name(table_name))
+  
+  def get_resource_name(self, resource_arn):
+    arn_elements = resource_arn.split(":")
+    is_resource_name = len(arn_elements) == 1
+    return resource_arn.split(":")[5].split('/')[1] if not is_resource_name else resource_arn
 
 class S3Bucket(AwsResourceType):
   def __init__(self):
@@ -75,6 +89,9 @@ class S3Bucket(AwsResourceType):
 
   def get_url(self, bucket_name):
     return "https://s3.console.aws.amazon.com/s3/buckets/{}?tab=objects".format(AwsResourceType.encode_name(bucket_name))
+  
+  def get_resource_name(self, bucket_name):
+    return bucket_name
   
 class CloudWatchLog(AwsResourceType):
   def __init__(self):
@@ -89,6 +106,11 @@ class CloudWatchLog(AwsResourceType):
     region = resource_arn.split(":")[3] if not is_resource_name else self.DEFAULT_REGION
     log_group_name = resource_arn.split(":")[6] if not is_resource_name else resource_arn
     return "https://{}.console.aws.amazon.com/cloudwatch/home#logsV2:log-groups/log-group/{}".format(region, AwsResourceType.encode_name(log_group_name))
+  
+  def get_resource_name(self, resource_arn):
+    arn_elements = resource_arn.split(":")
+    is_resource_name = len(arn_elements) == 1
+    return resource_arn.split(":")[6] if not is_resource_name else resource_arn
 
 # class AwsResourceType:
 #   _URLS = {

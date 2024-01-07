@@ -85,12 +85,11 @@ class KeywordQueryEventListener(EventListener):
                     return RenderResultListAction(items)
 
         elif (len(search_terms) > 1):
-            for aws_resource_name in aws_resources_file[resource_type.name][target_environment]:
-                if all(term.lower() in aws_resource_name.lower() for term in search_terms):
-                    url = resource_type.url.format(
-                        urllib.parse.quote(aws_resource_name, safe=""))
+            for aws_resource_arn in aws_resources_file[resource_type.name][target_environment]:
+                if all(term.lower() in aws_resource_arn.lower() for term in search_terms):
+                    url = resource_type.get_url(aws_resource_arn)
                     items.append(ExtensionResultItem(icon=resource_type.icon,
-                                                     name=aws_resource_name,
+                                                     name=resource_type.get_resource_name(aws_resource_arn),
                                                      description=f"Press <enter> to open in {browser}",
                                                      on_enter=RunScriptAction(f"{browser} '{url}'")))
                 if (len(items) >= MAX_ITEMS_IN_LIST):
