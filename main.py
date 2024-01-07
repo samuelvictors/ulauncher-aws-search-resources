@@ -2,7 +2,6 @@ import json
 import os
 import subprocess
 import sys
-import urllib.parse
 from pathlib import Path
 
 from ulauncher.api.client.EventListener import EventListener
