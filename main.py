@@ -89,7 +89,7 @@ class KeywordQueryEventListener(EventListener):
                 if all(term.lower() in aws_resource_arn.lower() for term in search_terms):
                     url = resource_type.get_url(aws_resource_arn)
                     items.append(ExtensionResultItem(icon=resource_type.icon,
-                                                     name=resource_type.get_resource_name(aws_resource_arn),
+                                                     name=resource_type.get_identification_components(aws_resource_arn)['resource_name'],
                                                      description=f"Press <enter> to open in {browser}",
                                                      on_enter=RunScriptAction(f"{browser} '{url}'")))
                 if (len(items) >= MAX_ITEMS_IN_LIST):
