@@ -44,13 +44,6 @@
       "default_value": "update"
     },
     {
-      "id": "browser",
-      "type": "input",
-      "name": "Browser",
-      "description": "More info on readme",
-      "default_value": "xdg-open"
-    },
-    {
       "id": "profile",
       "type": "input",
       "name": "AWS Profile",
@@ -62,6 +55,13 @@
       "name": "Stages",
       "description": "Which stages to search for. E.g. dev,beta,prod",
       "default_value": "dev,beta,prod"
+    },
+    {
+      "id": "browser",
+      "type": "input",
+      "name": "Browser",
+      "description": "More info on readme",
+      "default_value": "xdg-open"
     }
   ]
 }
