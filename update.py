@@ -62,7 +62,8 @@ def process_resource_search(resource_type, resources_label, profile_info, stages
         GLib.idle_add(resources_label.set_markup, error_text)
         time.sleep(10)
 
-def update_resources(resources_label, profile_info, stages):
+def update_resources(resources_label, profile_name, stages):
+    profile_info = AwsProfileInfo(profile_name, command_runner(build_profile_args(profile_name)))
     for resource_type in aws_resource_types.values():
         process_resource_search(resource_type, resources_label, profile_info, stages)
     Gtk.main_quit()
@@ -133,9 +134,7 @@ def create_window():
 
     GLib.timeout_add_seconds(1, update_progress, progress_bar)
 
-    profile_info = AwsProfileInfo(profile_name, command_runner(build_profile_args(profile_name)))
-
-    process_args = [resource_label, profile_info, stages]
+    process_args = [resource_label, profile_name, stages]
     thread = threading.Thread(target=update_resources, args=process_args)
     thread.start()
 
