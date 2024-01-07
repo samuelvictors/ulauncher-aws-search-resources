@@ -2,7 +2,7 @@
 
 - This plugin to [Ulauncher](https://ulauncher.io/) allows for faster access of resources in the AWS console without the need to search on each individual service.
 
-[Demo of the plugin](./images/demo.gif "Plugin in action")
+![Demo of the plugin](images/demo.gif)
 
 ## Getting started
 
