@@ -10,7 +10,7 @@
 - After starting it, right-click in the "Ulauncher" icon in your system tray and then go to "Preferences".
 - In the modal that will open, go to the "EXTENSIONS" tab.
 - Click in "Add extension".
-- Paste this repository URL: `https://github.com/samuelvictors/ulauncher-aws-search-resources` and the click on "Add".
+- Paste this repository URL: `https://github.com/samuelvictors/ulauncher-aws-search-resources` and then click on "Add".
 - The plugin searches for resources based in a local database stored in `~/.local/share/ulauncher/extensions/com.github.samuelvictors.ulauncher-aws-search-resources/resources.json`.
 - In order to fill it, first you need to run an update process. Just type `update` and then press "Enter" twice.
 - A small window will pop up and start the update process, that might take some minutes to complete (depending on the amount of resources that your current AWS profile has access to).
