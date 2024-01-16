@@ -2,7 +2,6 @@ import json
 import os
 import subprocess
 import sys
-import urllib.parse
 from pathlib import Path
 
 from ulauncher.api.client.EventListener import EventListener
@@ -48,8 +47,11 @@ class KeywordQueryEventListener(EventListener):
 
         if (keyword_id == 'update'):
             profile_preference = extension.preferences.get('profile', None)
+            stage_preference = extension.preferences.get('stages', None)
             update_description = f"Press enter to update resources with {profile_preference or 'default'} profile"
             update_data = {'profile': profile_preference} if profile_preference else {}
+            if stage_preference:
+                update_data['stages'] = stage_preference
             return RenderResultListAction([ExtensionResultItem(icon=UPDATE_ICON,
                                                                name="Update AWS Resources",
                                                                description=update_description,
@@ -82,12 +84,11 @@ class KeywordQueryEventListener(EventListener):
                     return RenderResultListAction(items)
 
         elif (len(search_terms) > 1):
-            for aws_resource_name in aws_resources_file[resource_type.name][target_environment]:
-                if all(term.lower() in aws_resource_name.lower() for term in search_terms):
-                    url = resource_type.url.format(
-                        urllib.parse.quote(aws_resource_name, safe=""))
+            for aws_resource_arn in aws_resources_file[resource_type.name][target_environment]:
+                if all(term.lower() in aws_resource_arn.lower() for term in search_terms):
+                    url = resource_type.get_url(aws_resource_arn)
                     items.append(ExtensionResultItem(icon=resource_type.icon,
-                                                     name=aws_resource_name,
+                                                     name=resource_type.get_identification_components(aws_resource_arn)['resource_name'],
                                                      description=f"Press <enter> to open in {browser}",
                                                      on_enter=RunScriptAction(f"{browser} '{url}'")))
                 if (len(items) >= MAX_ITEMS_IN_LIST):
@@ -108,9 +109,7 @@ class ItemEnterEventListener(EventListener):
         data = event.get_data()
         script_path = os.path.join(os.path.dirname(__file__), "update.py")
         python_executable = sys.executable
-        update_command_args = [python_executable, script_path]
-        if ('profile' in data):
-            update_command_args.append(data['profile'])
+        update_command_args = [python_executable, script_path, data.get('profile', ''), data.get('stages', 'dev,beta,prod')]
         subprocess.run(update_command_args)
         return RenderResultListAction([ExtensionResultItem(icon=UPDATE_ICON,
                                                         name="Update done",
