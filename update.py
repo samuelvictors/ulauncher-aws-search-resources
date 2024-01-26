@@ -11,7 +11,7 @@ import time
 import gi
 
 from aws_profile import AwsProfileInfo
-from aws_resource import aws_resource_types
+from aws_resource import aws_resource_types, AwsResourceName
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import GLib, Gtk
@@ -40,11 +40,14 @@ def process_resource_search(resource_type, resources_label, profiles, stages):
     resources_file_path = os.path.join(os.path.dirname(__file__), "resources.json")
     resources = json.load(open(resources_file_path))
     resources[resource_type.name] = {}
+    fallback_resources_origin = {} if resource_type.name == AwsResourceName.BUCKET.value else None
+    fallback_resources_origin_file_path = os.path.join(os.path.dirname(__file__), "fallback_resources_origin.json")
     try:
         for profile_info in profiles:
-            label_text = f"Updating {resource_type.name} with {profile_info.profile_name or 'default'}"
+            profile_name_label = profile_info.to_dict()["profile_name"]
+            label_text = f"Updating {resource_type.name} with {profile_name_label}"
             GLib.idle_add(resources_label.set_text, label_text)
-            print(f"Starting {resource_type.name} update with {profile_info.profile_name or 'default'} at {time.strftime('%H:%M:%S')}")
+            print(f"Starting {resource_type.name} update with {profile_name_label} at {time.strftime('%H:%M:%S')}")
             stages_regex = re.compile(f"-({stages.replace(',', '|')})")
             runner = command_runner(build_profile_args(profile_info.profile_name))
             search_results = resource_type.search_resources(runner, profile_info)
@@ -55,7 +58,12 @@ def process_resource_search(resource_type, resources_label, profiles, stages):
                     if env not in resources[resource_type.name]:
                         resources[resource_type.name][env] = []
                     resources[resource_type.name][env].append(result_item)
+                if fallback_resources_origin is not None:
+                    fallback_resources_origin[result_item] = profile_name_label
             json.dump(resources, open(resources_file_path, "w"), indent=2)
+            if fallback_resources_origin is not None:
+                print(f"Updating fallback resources origin at {fallback_resources_origin_file_path}")
+                json.dump(fallback_resources_origin, open(fallback_resources_origin_file_path, "w"), indent=2)
     except:
         error_type, error_value, error_traceback = sys.exc_info()
         print_aws_resource_fetch_error(resource_type, error_type, error_value, error_traceback)
@@ -66,6 +74,8 @@ def process_resource_search(resource_type, resources_label, profiles, stages):
 def update_resources(resources_label, profile_names, stages):
     profile_names_array = profile_names.split(',') if profile_names else [None]
     profiles = list(map(lambda p: AwsProfileInfo(p, command_runner(build_profile_args(p))), profile_names_array))
+    resources_file_path = os.path.join(os.path.dirname(__file__), "profiles_info.json")
+    json.dump(list(map(lambda p: p.to_dict(), profiles)), open(resources_file_path, "w"), indent=2)
     for resource_type in aws_resource_types.values():
         process_resource_search(resource_type, resources_label, profiles, stages)
     Gtk.main_quit()
