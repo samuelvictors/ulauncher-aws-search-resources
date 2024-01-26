@@ -47,7 +47,7 @@
       "id": "profile",
       "type": "input",
       "name": "AWS Profile",
-      "description": "AWS Profile to use"
+      "description": "AWS Profiles to use. E.g. iam-dev,iam-adm"
     },
     {
       "id": "stages",

@@ -32,6 +32,16 @@ class AWSResourceSearch(Extension):
 
 
 class KeywordQueryEventListener(EventListener):
+
+    def format_item_label(self, label):
+        words = label.split(" ")
+        formatted_label = f"{words[0]}"
+        for word in words[1:]:
+            next_segment_candidate = f"{formatted_label} {word}"
+            last_line = next_segment_candidate.split("\n")[-1]
+            formatted_label = next_segment_candidate if len(last_line) <= 67 else f"{formatted_label}\n{word}"
+        return formatted_label
+
     def on_event(self, event, extension):
         with open(Path(__file__).with_name('resources.json'), "r") as f:
             aws_resources_file = json.load(f)
@@ -48,8 +58,8 @@ class KeywordQueryEventListener(EventListener):
         if (keyword_id == 'update'):
             profile_preference = extension.preferences.get('profile', None)
             stage_preference = extension.preferences.get('stages', None)
-            update_description = f"Press enter to update resources with {profile_preference or 'default'} profile"
-            update_data = {'profile': profile_preference} if profile_preference else {}
+            update_description = self.format_item_label(f"Press enter to update resources with {profile_preference.replace(',', ', ') or 'default'} profile(s)")
+            update_data = {'profiles': profile_preference} if profile_preference else {}
             if stage_preference:
                 update_data['stages'] = stage_preference
             return RenderResultListAction([ExtensionResultItem(icon=UPDATE_ICON,
@@ -109,7 +119,7 @@ class ItemEnterEventListener(EventListener):
         data = event.get_data()
         script_path = os.path.join(os.path.dirname(__file__), "update.py")
         python_executable = sys.executable
-        update_command_args = [python_executable, script_path, data.get('profile', ''), data.get('stages', 'dev,beta,prod')]
+        update_command_args = [python_executable, script_path, data.get('profiles', ''), data.get('stages', 'dev,beta,prod')]
         subprocess.run(update_command_args)
         return RenderResultListAction([ExtensionResultItem(icon=UPDATE_ICON,
                                                         name="Update done",
