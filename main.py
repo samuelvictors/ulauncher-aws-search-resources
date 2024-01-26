@@ -106,7 +106,7 @@ class KeywordQueryEventListener(EventListener):
                     resource_components = resource_type.get_identification_components(aws_resource_arn)
                     command_description = f"Press <enter> to open in {browser}"
                     items.append(ExtensionResultItem(icon=resource_type.icon,
-                                                     name=resource_components['resource_name'],
+                                                     name=resource_type.get_label(aws_resource_arn),
                                                      description=self.assemble_resource_description(resource_components, command_description),
                                                      on_enter=RunScriptAction(f"{browser} '{url}'")))
                 if (len(items) >= MAX_ITEMS_IN_LIST):
