@@ -42,13 +42,13 @@ def process_resource_search(resource_type, resources_label, profiles, stages):
     resources[resource_type.name] = {}
     fallback_resources_origin = {} if resource_type.name == AwsResourceName.BUCKET.value else None
     fallback_resources_origin_file_path = os.path.join(os.path.dirname(__file__), "fallback_resources_origin.json")
+    stages_regex = re.compile(f"-({stages.replace(',', '|')})")
     try:
         for profile_info in profiles:
             profile_name_label = profile_info.to_dict()["profile_name"]
             label_text = f"Updating {resource_type.name} with {profile_name_label}"
             GLib.idle_add(resources_label.set_text, label_text)
             print(f"Starting {resource_type.name} update with {profile_name_label} at {time.strftime('%H:%M:%S')}")
-            stages_regex = re.compile(f"-({stages.replace(',', '|')})")
             runner = command_runner(build_profile_args(profile_info.profile_name))
             search_results = resource_type.search_resources(runner, profile_info)
             for result_item in search_results:

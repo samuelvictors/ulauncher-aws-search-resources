@@ -85,7 +85,7 @@ class DynamoTable(AwsResourceType):
     resource_components = self.get_identification_components(resource_arn)
     region = resource_components["region"]
     table_name = resource_components["resource_name"]
-    return "https://{}.console.aws.amazon.com/dynamodbv2/home#item-explorer?maximize=true&table={}".format(region, AwsResourceType.encode_name(table_name))
+    return "https://{}.console.aws.amazon.com/dynamodbv2/home#item-explorer?table={}".format(region, AwsResourceType.encode_name(table_name))
 
 class S3Bucket(AwsResourceType):
   def __init__(self):
