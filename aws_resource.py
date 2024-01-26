@@ -51,7 +51,8 @@ class LambdaFunction(AwsResourceType):
     is_resource_name = len(arn_elements) == 1
     return {
       "region": resource_arn.split(":")[3] if not is_resource_name else self.DEFAULT_REGION,
-      "resource_name": resource_arn.split(":")[6] if not is_resource_name else resource_arn
+      "resource_name": resource_arn.split(":")[6] if not is_resource_name else resource_arn,
+      "account_id": resource_arn.split(":")[4] if not is_resource_name else ""
     }
 
   def get_url(self, resource_arn):
@@ -73,7 +74,8 @@ class DynamoTable(AwsResourceType):
     is_resource_name = len(arn_elements) == 1
     return {
       "region": resource_arn.split(":")[3] if not is_resource_name else self.DEFAULT_REGION,
-      "resource_name": resource_arn.split(":")[5].split('/')[1] if not is_resource_name else resource_arn
+      "resource_name": resource_arn.split(":")[5].split('/')[1] if not is_resource_name else resource_arn,
+      "account_id": resource_arn.split(":")[4] if not is_resource_name else ""
     }
 
   def get_url(self, resource_arn):
@@ -107,7 +109,8 @@ class CloudWatchLog(AwsResourceType):
     is_resource_name = len(arn_elements) == 1
     return {
       "region": resource_arn.split(":")[3] if not is_resource_name else self.DEFAULT_REGION,
-      "resource_name": resource_arn.split(":")[6] if not is_resource_name else resource_arn
+      "resource_name": resource_arn.split(":")[6] if not is_resource_name else resource_arn,
+      "account_id": resource_arn.split(":")[4] if not is_resource_name else ""
     }
 
   def get_url(self, resource_arn):

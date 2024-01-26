@@ -22,7 +22,7 @@ from aws_resource import AwsResourceName, aws_resource_types
 UPDATE_ICON = "images/update.png"
 ENVIRONMENT_ICON = "images/environment.png"
 MAX_ITEMS_IN_LIST = 8
-
+LINE_MAX_SIZE = 67
 
 class AWSResourceSearch(Extension):
     def __init__(self):
@@ -33,14 +33,20 @@ class AWSResourceSearch(Extension):
 
 class KeywordQueryEventListener(EventListener):
 
-    def format_item_label(self, label):
+    def format_description_into_line_size(self, label):
         words = label.split(" ")
         formatted_label = f"{words[0]}"
         for word in words[1:]:
             next_segment_candidate = f"{formatted_label} {word}"
             last_line = next_segment_candidate.split("\n")[-1]
-            formatted_label = next_segment_candidate if len(last_line) <= 67 else f"{formatted_label}\n{word}"
+            formatted_label = next_segment_candidate if len(last_line) <= LINE_MAX_SIZE else f"{formatted_label}\n{word}"
         return formatted_label
+
+    def assemble_resource_description(self, resource_components, command_description):
+        if 'account_id' in resource_components:
+            return f"{resource_components['region']} / {resource_components['account_id']}\n{command_description}"
+        else:
+            return command_description
 
     def on_event(self, event, extension):
         with open(Path(__file__).with_name('resources.json'), "r") as f:
@@ -58,7 +64,7 @@ class KeywordQueryEventListener(EventListener):
         if (keyword_id == 'update'):
             profile_preference = extension.preferences.get('profile', None)
             stage_preference = extension.preferences.get('stages', None)
-            update_description = self.format_item_label(f"Press enter to update resources with {profile_preference.replace(',', ', ') or 'default'} profile(s)")
+            update_description = self.format_description_into_line_size(f"Press enter to update resources with {profile_preference.replace(',', ', ') or 'default'} profile(s)")
             update_data = {'profiles': profile_preference} if profile_preference else {}
             if stage_preference:
                 update_data['stages'] = stage_preference
@@ -97,9 +103,11 @@ class KeywordQueryEventListener(EventListener):
             for aws_resource_arn in aws_resources_file[resource_type.name][target_environment]:
                 if all(term.lower() in aws_resource_arn.lower() for term in search_terms):
                     url = resource_type.get_url(aws_resource_arn)
+                    resource_components = resource_type.get_identification_components(aws_resource_arn)
+                    command_description = f"Press <enter> to open in {browser}"
                     items.append(ExtensionResultItem(icon=resource_type.icon,
-                                                     name=resource_type.get_identification_components(aws_resource_arn)['resource_name'],
-                                                     description=f"Press <enter> to open in {browser}",
+                                                     name=resource_components['resource_name'],
+                                                     description=self.assemble_resource_description(resource_components, command_description),
                                                      on_enter=RunScriptAction(f"{browser} '{url}'")))
                 if (len(items) >= MAX_ITEMS_IN_LIST):
                     return RenderResultListAction(items)
