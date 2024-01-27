@@ -123,7 +123,7 @@ class CloudWatchLog(AwsResourceType):
   def get_url(self, resource_arn):
     resource_components = self.get_identification_components(resource_arn)
     region = resource_components["region"]
-    log_group_name = resource_components["resource_name"]
+    log_group_name = resource_components["resource_name"].replace("/", "$252F") # Firefox-specific fix: weird behavior of containers dealing with the encoded slash character (%2F)
     return "https://{}.console.aws.amazon.com/cloudwatch/home#logsV2:log-groups/log-group/{}".format(region, AwsResourceType.encode_name(log_group_name))
 
 aws_resource_types = {
