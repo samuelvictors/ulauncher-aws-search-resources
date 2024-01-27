@@ -68,15 +68,32 @@ which chromium
   - opera - Opera
   - msedge - Microsoft Edge
 
-***EXTRA***
+### Additional arguments
 
-- It's possible in Chrome to start the browser in a specific profile, just enter the value below and change the profile name:
+- This setting allow to customize even further the browser invocation passing special arguments.
+- It's possible to define a set of arguments to be supplied to all invocations or specify different arguments depending on the AWS profile which originally found the resource during update process. This is specially handy if you intend to use different browser profiles/containers depending on the account and region of the resource.
+- Below some examples of using this setting:
 
-```BASH
-google-chrome --profile-directory="Profile 1"
+#### Scenario 1: Open all resources in a new private window in Firefox
+
+```text
+-private-window 
 ```
 
-- To check the available profiles look in the Chrome folder.
+#### Scenario 2: Open resources in different profiles in Chrome
+
+- All resources found by "dev" AWS profile will open in profile "Developer" of the Chrome browser.
+- All resources found by "adm" AWS profile will open in profile "SysAdmin" of the Chrome browser.
+
+```text
+dev=--profile-directory\="Developer",adm=--profile-directory\="SysAdmin"
+```
+
+- **Attention**: notice that besides the "=" after the profile name, all other "=" are escaped. The same applies to ",", used as a separator character between the specific arguments to each AWS profile.
+
+### Extra tip
+
+- To check all available profiles in your Chrome browser, look at these directories:
   - On Linux: ~/.config/google-chrome
   - On macOS: ~/Library/Application Support/Google/Chrome
   - On Windows: %USERPROFILE%\AppData\Local\Google\Chrome\User Data

@@ -56,10 +56,11 @@ class KeywordQueryEventListener(EventListener):
             return fallback_resources_origin.get(resource_name, None)
         else:
             resource_account_id = resource_components.get("account_id", None)
+            resource_region = resource_components.get("region", None)
             if not resource_account_id:
                 return None
             for profile_info in profiles_info:
-                if profile_info['account_id'] == resource_account_id:
+                if profile_info['account_id'] == resource_account_id and profile_info['region'] == resource_region:
                     return profile_info['profile_name']
             return None
 
@@ -156,7 +157,6 @@ class KeywordQueryEventListener(EventListener):
                                                      extension.preferences.get('arguments', None),
                                                      profiles_info,
                                                      fallback_resources_origin)
-                    print("command", command)
                     items.append(ExtensionResultItem(icon=resource_type.icon,
                                                      name=resource_type.get_label(aws_resource_arn),
                                                      description=self.assemble_resource_description(resource_components, command_description),
