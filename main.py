@@ -22,8 +22,10 @@ from aws_resource import AwsResourceName, aws_resource_types
 
 UPDATE_ICON = "images/update.png"
 ENVIRONMENT_ICON = "images/environment.png"
+
 MAX_ITEMS_IN_LIST = 8
 LINE_MAX_SIZE = 67
+
 ARGUMENTS_SEPARATOR = r"(?<!\\)," # any comma not preceded by a backslash (which is working as an escape character)
 PROFILE_ARGUMENTS_OPERATOR = r"(?<!\\)=" # any equal sign not preceded by a backslash (which is working as an escape character)
 
@@ -46,7 +48,7 @@ class KeywordQueryEventListener(EventListener):
         return formatted_label
 
     def assemble_resource_description(self, resource_components, command_description):
-        if 'account_id' in resource_components:
+        if 'account_id' in resource_components and 'region' in resource_components:
             return f"{resource_components['region']} / {resource_components['account_id']}\n{command_description}"
         return command_description
 
@@ -57,7 +59,7 @@ class KeywordQueryEventListener(EventListener):
         else:
             resource_account_id = resource_components.get("account_id", None)
             resource_region = resource_components.get("region", None)
-            if not resource_account_id:
+            if not resource_account_id or not resource_region:
                 return None
             for profile_info in profiles_info:
                 if profile_info['account_id'] == resource_account_id and profile_info['region'] == resource_region:
