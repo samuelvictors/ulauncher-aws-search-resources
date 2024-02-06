@@ -47,7 +47,7 @@
       "id": "profile",
       "type": "input",
       "name": "AWS Profile",
-      "description": "AWS Profile to use"
+      "description": "AWS Profiles to use. E.g. iam-dev,iam-adm"
     },
     {
       "id": "stages",
@@ -60,8 +60,14 @@
       "id": "browser",
       "type": "input",
       "name": "Browser",
-      "description": "More info on readme",
+      "description": "More info on readme.",
       "default_value": "xdg-open"
+    },
+    {
+      "id": "arguments",
+      "type": "text",
+      "name": "Additional Arguments",
+      "description": "Additional arguments to pass to the browser. More info on readme."
     }
   ]
 }

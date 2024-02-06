@@ -31,6 +31,9 @@ class AwsResourceType(ABC):
   def get_identification_components(self, resource_identification):
     pass
 
+  def get_label(self, resource_identification):
+    return self.get_identification_components(resource_identification)['resource_name']
+
   @abstractmethod
   def get_url(self, resource_identification):
     pass
@@ -51,7 +54,8 @@ class LambdaFunction(AwsResourceType):
     is_resource_name = len(arn_elements) == 1
     return {
       "region": resource_arn.split(":")[3] if not is_resource_name else self.DEFAULT_REGION,
-      "resource_name": resource_arn.split(":")[6] if not is_resource_name else resource_arn
+      "resource_name": resource_arn.split(":")[6] if not is_resource_name else resource_arn,
+      "account_id": resource_arn.split(":")[4] if not is_resource_name else ""
     }
 
   def get_url(self, resource_arn):
@@ -73,14 +77,15 @@ class DynamoTable(AwsResourceType):
     is_resource_name = len(arn_elements) == 1
     return {
       "region": resource_arn.split(":")[3] if not is_resource_name else self.DEFAULT_REGION,
-      "resource_name": resource_arn.split(":")[5].split('/')[1] if not is_resource_name else resource_arn
+      "resource_name": resource_arn.split(":")[5].split('/')[1] if not is_resource_name else resource_arn,
+      "account_id": resource_arn.split(":")[4] if not is_resource_name else ""
     }
 
   def get_url(self, resource_arn):
     resource_components = self.get_identification_components(resource_arn)
     region = resource_components["region"]
     table_name = resource_components["resource_name"]
-    return "https://{}.console.aws.amazon.com/dynamodbv2/home#item-explorer?maximize=true&table={}".format(region, AwsResourceType.encode_name(table_name))
+    return "https://{}.console.aws.amazon.com/dynamodbv2/home#item-explorer?table={}".format(region, AwsResourceType.encode_name(table_name))
 
 class S3Bucket(AwsResourceType):
   def __init__(self):
@@ -101,14 +106,19 @@ class CloudWatchLog(AwsResourceType):
 
   def search_resources(self, command_runner, profile_info):
     return command_runner("aws logs describe-log-groups --query 'logGroups[].arn'")
-  
+
   def get_identification_components(self, resource_arn):
     arn_elements = resource_arn.split(":")
     is_resource_name = len(arn_elements) == 1
     return {
       "region": resource_arn.split(":")[3] if not is_resource_name else self.DEFAULT_REGION,
-      "resource_name": resource_arn.split(":")[6] if not is_resource_name else resource_arn
+      "resource_name": resource_arn.split(":")[6] if not is_resource_name else resource_arn,
+      "account_id": resource_arn.split(":")[4] if not is_resource_name else ""
     }
+  
+  def get_label(self, resource_arn):
+    resource_name = self.get_identification_components(resource_arn)['resource_name']
+    return resource_name.replace("/aws/lambda/", "")
 
   def get_url(self, resource_arn):
     resource_components = self.get_identification_components(resource_arn)

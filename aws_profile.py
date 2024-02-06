@@ -9,3 +9,10 @@ class AwsProfileInfo:
     
     def _remove_extra_chars(self, string):
       return re.sub(r'[\n"]', "", string)
+    
+    def to_dict(self):
+      return {
+        "profile_name": self.profile_name or "default",
+        "region": self.region,
+        "account_id": self.account_id
+      }

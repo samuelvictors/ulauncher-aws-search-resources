@@ -7,14 +7,19 @@ import subprocess
 import sys
 import threading
 import time
+from file_utils import assemble_file_path, open_json_file, update_json_file
 
 import gi
 
 from aws_profile import AwsProfileInfo
-from aws_resource import aws_resource_types
+from aws_resource import aws_resource_types, AwsResourceName
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import GLib, Gtk
+
+RESOURCES_FILE_NAME = "resources.json"
+FALLBACK_RESOURCES_ORIGIN_FILE_NAME = "fallback_resources_origin.json"
+PROFILES_INFO_FILE_NAME = "profiles_info.json"
 
 
 def command_runner(additional_args):
@@ -36,25 +41,32 @@ def is_match_result(stages_regex):
         return match is not None
     return run_match
 
-def process_resource_search(resource_type, resources_label, profile_info, stages):
-    print(f"Starting {resource_type.name} update at {time.strftime('%H:%M:%S')}")
+def process_resource_search(resource_type, resources_label, profiles, stages):
+    resources = open_json_file(RESOURCES_FILE_NAME)
+    resources[resource_type.name] = {}
+    fallback_resources_origin = {} if resource_type.name == AwsResourceName.BUCKET.value else None
+    stages_regex = re.compile(f"-({stages.replace(',', '|')})")
     try:
-        label_text = f"Updating {resource_type.name}"
-        GLib.idle_add(resources_label.set_text, label_text)
-        resources_file_path = os.path.join(os.path.dirname(__file__), "resources.json")
-        resources = json.load(open(resources_file_path))
-        runner = command_runner(build_profile_args(profile_info.profile_name))
-        resources[resource_type.name] = {}
-        stages_regex = re.compile(f"-({stages.replace(',', '|')})")
-        search_results = resource_type.search_resources(runner, profile_info)
-        for result_item in search_results:
-            match = re.search(stages_regex, result_item)
-            if match:
-                env = match.group(1)
-                if env not in resources[resource_type.name]:
-                    resources[resource_type.name][env] = []
-                resources[resource_type.name][env].append(result_item)
-        json.dump(resources, open(resources_file_path, "w"), indent=2)
+        for profile_info in profiles:
+            profile_name_label = profile_info.to_dict()["profile_name"]
+            label_text = f"Updating {resource_type.name} with {profile_name_label}"
+            GLib.idle_add(resources_label.set_text, label_text)
+            print(f"Starting {resource_type.name} update with {profile_name_label} at {time.strftime('%H:%M:%S')}")
+            runner = command_runner(build_profile_args(profile_info.profile_name))
+            search_results = resource_type.search_resources(runner, profile_info)
+            for result_item in search_results:
+                match = re.search(stages_regex, result_item)
+                if match:
+                    env = match.group(1)
+                    if env not in resources[resource_type.name]:
+                        resources[resource_type.name][env] = []
+                    resources[resource_type.name][env].append(result_item)
+                if fallback_resources_origin is not None:
+                    fallback_resources_origin[result_item] = profile_name_label
+            update_json_file(RESOURCES_FILE_NAME, resources)
+            if fallback_resources_origin is not None:
+                print(f"Updating fallback resources origin at {assemble_file_path('fallback_resources_origin.json')}")
+                update_json_file(FALLBACK_RESOURCES_ORIGIN_FILE_NAME, fallback_resources_origin)
     except:
         error_type, error_value, error_traceback = sys.exc_info()
         print_aws_resource_fetch_error(resource_type, error_type, error_value, error_traceback)
@@ -62,10 +74,12 @@ def process_resource_search(resource_type, resources_label, profile_info, stages
         GLib.idle_add(resources_label.set_markup, error_text)
         time.sleep(10)
 
-def update_resources(resources_label, profile_name, stages):
-    profile_info = AwsProfileInfo(profile_name, command_runner(build_profile_args(profile_name)))
+def update_resources(resources_label, profile_names, stages):
+    profile_names_array = profile_names.split(',') if profile_names else [None]
+    profiles = list(map(lambda p: AwsProfileInfo(p, command_runner(build_profile_args(p))), profile_names_array))
+    update_json_file(PROFILES_INFO_FILE_NAME, list(map(lambda p: p.to_dict(), profiles)))
     for resource_type in aws_resource_types.values():
-        process_resource_search(resource_type, resources_label, profile_info, stages)
+        process_resource_search(resource_type, resources_label, profiles, stages)
     Gtk.main_quit()
 
 def update_progress(progress_bar):
@@ -103,6 +117,8 @@ def create_window():
     window.set_position(Gtk.WindowPosition.CENTER)
     window.connect("destroy", Gtk.main_quit)
     window.set_default_size(300, 150)
+    window.set_resizable(False)
+    window.set_deletable(False)
 
     vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
     vbox.set_margin_start(10)
@@ -116,14 +132,14 @@ def create_window():
     listbox.set_selection_mode(Gtk.SelectionMode.NONE)
     vbox.pack_start(listbox, True, True, 2)
 
-    profile_name = next(iter(sys.argv[1:]), None)    
-    profile_name = profile_name if (profile_name is not None and profile_name != '') else None
-    add_parameter_label(listbox, f"profile: {profile_name or 'default'}")
+    profile_names = next(iter(sys.argv[1:]), None)    
+    profile_names = profile_names if (profile_names is not None and profile_names != '') else None
+    add_parameter_label(listbox, f"profiles: {profile_names or 'default'}")
 
     stages = next(iter(sys.argv[2:]), "dev,beta,prod")
     add_parameter_label(listbox, f"stages: {stages}")
 
-    print(f'Update process args: profile={profile_name} / stages={stages}')
+    print(f'Update process args: profiles={profile_names} / stages={stages}')
 
     progress_bar = Gtk.ProgressBar()
     vbox.pack_start(progress_bar, True, True, 8)
@@ -134,7 +150,7 @@ def create_window():
 
     GLib.timeout_add_seconds(1, update_progress, progress_bar)
 
-    process_args = [resource_label, profile_name, stages]
+    process_args = [resource_label, profile_names, stages]
     thread = threading.Thread(target=update_resources, args=process_args)
     thread.start()
 
