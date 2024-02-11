@@ -47,7 +47,7 @@ class LambdaFunction(AwsResourceType):
     super().__init__(AwsResourceName.FUNCTION.value, "images/lambda.png")
 
   def search_resources(self, command_runner, profile_info):
-    return command_runner("aws lambda list-functions --query 'Functions[].FunctionArn'")
+    return command_runner("aws lambda list-functions --query 'Functions[].FunctionArn' --output json")
   
   def get_identification_components(self, resource_arn):
     arn_elements = resource_arn.split(":")
@@ -69,7 +69,7 @@ class DynamoTable(AwsResourceType):
     super().__init__(AwsResourceName.TABLE.value, "images/dynamo.png")
 
   def search_resources(self, command_runner, profile_info):
-    table_names = command_runner("aws dynamodb list-tables --query 'TableNames[]'")
+    table_names = command_runner("aws dynamodb list-tables --query 'TableNames[]' --output json")
     return list(map(lambda t: f"arn:aws:dynamodb:{profile_info.region}:{profile_info.account_id}:table/{t}", table_names))
   
   def get_identification_components(self, resource_arn):
@@ -92,7 +92,7 @@ class S3Bucket(AwsResourceType):
     super().__init__(AwsResourceName.BUCKET.value, "images/bucket.png")
 
   def search_resources(self, command_runner, profile_info):
-    return command_runner("aws s3api list-buckets --query 'Buckets[*].Name'")
+    return command_runner("aws s3api list-buckets --query 'Buckets[*].Name' --output json")
 
   def get_identification_components(self, bucket_name):
     return { "resource_name": bucket_name }
@@ -105,7 +105,7 @@ class CloudWatchLog(AwsResourceType):
     super().__init__(AwsResourceName.LOG.value, "images/cloudwatch.png")
 
   def search_resources(self, command_runner, profile_info):
-    return command_runner("aws logs describe-log-groups --query 'logGroups[].arn'")
+    return command_runner("aws logs describe-log-groups --query 'logGroups[].arn' --output json")
 
   def get_identification_components(self, resource_arn):
     arn_elements = resource_arn.split(":")
