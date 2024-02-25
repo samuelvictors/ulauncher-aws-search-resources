@@ -74,16 +74,30 @@ which chromium
 - It's possible to define a set of arguments to be supplied to all invocations or specify different arguments depending on the AWS profile which originally found the resource during update process. This is specially handy if you intend to use different browser profiles/containers depending on the account and region of the resource.
 - Below some examples of using this setting:
 
-#### Scenario 1: Open all resources in a new private window in Firefox
+#### Scenario 1: use a single argument to all resources
+
+- Example: open all resources in a new private window in Firefox**
 
 ```text
 -private-window 
 ```
 
-#### Scenario 2: Open resources in different profiles in Chrome
+#### Scenario 2: put the URL in a specific position in the arguments
 
-- All resources found by "dev" AWS profile will open in profile "Developer" of the Chrome browser.
-- All resources found by "adm" AWS profile will open in profile "SysAdmin" of the Chrome browser.
+- Example: open resources with a specific container in Firefox.
+- If you use [Multi-Account Containers](https://addons.mozilla.org/en-US/firefox/addon/multi-account-containers) in Firefox, you can select one of them where you keep your AWS login active to open all AWS resources, like this:
+
+```text
+'ext+container:name\=AWS+Adm&url\=%url'
+```
+
+- By default, our plugin always executes the command to open the browser in the following order: browser executable + arguments + URL, but you can also put the URL in any position of the argument option using a template parameter `%url`, just like the example above.
+
+#### Scenario 3: define different arguments based on AWS profile
+
+- Example:
+  - All resources found by "dev" AWS profile will open in profile "Developer" of the Chrome browser.
+  - All resources found by "adm" AWS profile will open in profile "SysAdmin" of the Chrome browser.
 
 ```text
 dev=--profile-directory\="Developer",adm=--profile-directory\="SysAdmin"
