@@ -111,3 +111,15 @@ dev=--profile-directory\="Developer",adm=--profile-directory\="SysAdmin"
   - On Linux: ~/.config/google-chrome
   - On macOS: ~/Library/Application Support/Google/Chrome
   - On Windows: %USERPROFILE%\AppData\Local\Google\Chrome\User Data
+
+### How to debug
+
+- If you got some error while updating the list of resources or doing another action, you might try to run the plugin outputting logs to your terminal:
+  - First quit Ulauncher
+  - Run this command in a terminal window to start Ulauncher again but with no plugins: `ulauncher --no-extensions --dev -v`
+  - To start the plugin again, open another terminal tab/window and run:
+    ```shell
+    VERBOSE=1 ULAUNCHER_WS_API=ws://127.0.0.1:5054/com.github.samuelvictors.ulauncher-aws-search-resources PYTHONPATH=/usr/lib/python3/dist-packages /usr/bin/python3 \
+    ~/.local/share/ulauncher/extensions/com.github.samuelvictors.ulauncher-aws-search-resources/main.py
+    ```
+  - With this command, all output generated during plugin execution will show up in that terminal. Just repeat the action that caused the error and it should show up something in there.
