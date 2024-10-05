@@ -68,6 +68,13 @@
       "type": "text",
       "name": "Additional Arguments",
       "description": "Additional arguments to pass to the browser. More info on readme."
+    },
+    {
+      "id": "max_results",
+      "type": "input",
+      "name": "Max results",
+      "description": "Maximum number of results to show.",
+      "default_value": "12"
     }
   ]
 }

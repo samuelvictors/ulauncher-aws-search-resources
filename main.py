@@ -23,7 +23,7 @@ from aws_resource import AwsResourceName, aws_resource_types
 UPDATE_ICON = "images/update.png"
 ENVIRONMENT_ICON = "images/environment.png"
 
-MAX_ITEMS_IN_LIST = 8
+DEFAULT_MAX_RESULTS = 12
 LINE_MAX_SIZE = 67
 
 ARGUMENTS_SEPARATOR = r"(?<!\\)," # any comma not preceded by a backslash (which is working as an escape character)
@@ -102,6 +102,7 @@ class KeywordQueryEventListener(EventListener):
         query = event.get_argument() or ""
         keyword = event.get_keyword()
         browser = extension.preferences['browser']
+        max_results = int(extension.preferences['max_results'] or DEFAULT_MAX_RESULTS)
 
         for kwId, kw in extension.preferences.items():
             if kw == keyword:
@@ -143,7 +144,7 @@ class KeywordQueryEventListener(EventListener):
                                                      name=environment,
                                                      description="Press <enter> to select this environment",
                                                      on_enter=SetUserQueryAction(f"{keyword} {environment} ")))
-                if (len(items) >= MAX_ITEMS_IN_LIST):
+                if (len(items) >= max_results):
                     return RenderResultListAction(items)
 
         elif (len(search_terms) > 1):
@@ -163,7 +164,7 @@ class KeywordQueryEventListener(EventListener):
                                                      name=resource_type.get_label(aws_resource_arn),
                                                      description=self.assemble_resource_description(resource_components, command_description),
                                                      on_enter=RunScriptAction(command)))
-                if (len(items) >= MAX_ITEMS_IN_LIST):
+                if (len(items) >= max_results):
                     return RenderResultListAction(items)
 
         if not items:
