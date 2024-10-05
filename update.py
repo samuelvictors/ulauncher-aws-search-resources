@@ -21,7 +21,6 @@ RESOURCES_FILE_NAME = "resources.json"
 FALLBACK_RESOURCES_ORIGIN_FILE_NAME = "fallback_resources_origin.json"
 PROFILES_INFO_FILE_NAME = "profiles_info.json"
 
-
 def command_runner(additional_args):
     def run_command(command, output_format="json"):
         result = subprocess.check_output(f"{command} {additional_args or ''}", shell=True)
@@ -74,9 +73,23 @@ def process_resource_search(resource_type, resources_label, profiles, stages):
         GLib.idle_add(resources_label.set_markup, error_text)
         time.sleep(10)
 
+def load_profiles(profile_names_array, resources_label):
+    profiles = []
+    try:
+        profiles = list(map(lambda p: AwsProfileInfo(p, command_runner(build_profile_args(p))), profile_names_array))
+    except:
+        error_type, error_value, error_traceback = sys.exc_info()
+        print(f"Error during fetch aws profiles: {error_type}, {error_value}")
+        print(error_traceback)
+        error_text = "<span color='red'>Error: An error occurred while fetching AWS profiles</span>"
+        GLib.idle_add(resources_label.set_markup, error_text)
+    return profiles
+
 def update_resources(resources_label, profile_names, stages):
     profile_names_array = profile_names.split(',') if profile_names else [None]
-    profiles = list(map(lambda p: AwsProfileInfo(p, command_runner(build_profile_args(p))), profile_names_array))
+    profiles = load_profiles(profile_names_array, resources_label)
+    if not profiles:
+        return
     update_json_file(PROFILES_INFO_FILE_NAME, list(map(lambda p: p.to_dict(), profiles)))
     for resource_type in aws_resource_types.values():
         process_resource_search(resource_type, resources_label, profiles, stages)
